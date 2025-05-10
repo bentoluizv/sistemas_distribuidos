@@ -33,22 +33,17 @@ O sistema utiliza uma arquitetura de microserviços com as seguintes caracterís
 
 ### Iniciando os Serviços
 
-1. Na raiz do projeto, execute:
+1. Na raiz do projeto, execute para rodar os dois micro serviços ao mesmo tempo:
 
     ```bash
-    docker-compose up --build -d
+    docker compose -f notification-service/docker-compose.yaml -f payment-service/docker-compose.yaml up --build -d
     ```
 
-2. Para verificar os logs:
+2. Para parar um ou mais serviços referencie com o -f qual o docker-compose que está interagindo:
 
     ```bash
-    docker-compose logs -f
-    ```
+    docker compose -f notification-service/docker-compose.yaml -f payment-service/docker-compose.yaml down
 
-3. Para parar os serviços:
-
-    ```bash
-    docker-compose down
     ```
 
 ### Acessando os Serviços

@@ -1,24 +1,22 @@
-FROM node:24-alpine3.20 AS build
+FROM node:24-alpine3.20 AS base
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+COPY . /app
 
 WORKDIR /app
 
-COPY package*.json ./
+FROM base AS prod-deps
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
 
-RUN npm ci --only=production
+FROM base AS build
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN pnpm run build
 
-COPY . .
-
-RUN npm run build
-
-
-FROM node:24-alpine3.20
-
-WORKDIR /app
-
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-
+FROM base
+COPY --from=prod-deps /app/node_modules /app/node_modules
+COPY --from=build /app/dist /app/dist
 EXPOSE 3000
-
-CMD ["node", "dist/main"]
+CMD [ "pnpm", "start" ]
