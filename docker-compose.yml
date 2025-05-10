@@ -1,0 +1,132 @@
+
+services:
+  notification-database:
+    image: postgres:17.5
+    container_name: notification-database
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: notification_user
+      POSTGRES_PASSWORD: notification_pass
+      POSTGRES_DB: notification_db
+    volumes:
+      - notification_postgres_data:/var/lib/postgresql/data
+    networks:
+      - notification_net
+
+  notification-redis:
+    image: redis:8.0
+    container_name: notification-redis
+    restart: unless-stopped
+    volumes:
+      - notification_redis_data:/data
+    networks:
+      - notification_net
+
+  notification-rabbitmq:
+    image: rabbitmq:4.1
+    container_name: notification-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: notification_user
+      RABBITMQ_DEFAULT_PASS: notification_pass
+    ports:
+      - "15672:15672"
+    volumes:
+      - notification_rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - notification_net
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://notification_user:notification_pass@notification-postgres:5432/notification_db
+      REDIS_URL: redis://notification-redis:6379
+      RABBITMQ_URL: amqp://notification_user:notification_pass@notification-rabbitmq:5672
+    depends_on:
+      - notification-postgres
+      - notification-redis
+      - notification-rabbitmq
+    networks:
+      - notification_net
+    volumes:
+      - ./notification-service:/app
+    working_dir: /app
+    command: npm run dev
+
+
+  payment-postgres:
+    image: postgres:17.5
+    container_name: payment-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: payment_user
+      POSTGRES_PASSWORD: payment_pass
+      POSTGRES_DB: payment_db
+    volumes:
+      - payment_postgres_data:/var/lib/postgresql/data
+    networks:
+      - payment_net
+
+  payment-redis:
+    image: redis:8.0
+    container_name: payment-redis
+    restart: unless-stopped
+    volumes:
+      - payment_redis_data:/data
+    networks:
+      - payment_net
+
+  payment-rabbitmq:
+    image: rabbitmq:4.1
+    container_name: payment-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: payment_user
+      RABBITMQ_DEFAULT_PASS: payment_pass
+    ports:
+      - "15673:15672"
+    volumes:
+      - payment_rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - payment_net
+
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://payment_user:payment_pass@payment-postgres:5432/payment_db
+      REDIS_URL: redis://payment-redis:6379
+      RABBITMQ_URL: amqp://payment_user:payment_pass@payment-rabbitmq:5672
+    depends_on:
+      - payment-postgres
+      - payment-redis
+      - payment-rabbitmq
+    networks:
+      - payment_net
+    volumes:
+      - ./payment-service:/app
+    working_dir: /app
+    command: npm run dev
+
+# === Networks ===
+
+networks:
+  notification_net:
+    name: notification_net
+    driver: bridge
+  payment_net:
+    name: payment_net
+    driver: bridge
+
+# === Volumes ===
+
+volumes:
+  notification_postgres_data:
+  notification_redis_data:
+  notification_rabbitmq_data:
+  payment_postgres_data:
+  payment_redis_data:
+  payment_rabbitmq_data:
