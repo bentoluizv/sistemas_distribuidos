@@ -33,16 +33,30 @@ O sistema utiliza uma arquitetura de microserviços com as seguintes caracterís
 
 ### Iniciando os Serviços
 
+#### ***TL:DR***
+
+> ```ERROR: Network queue_net declared as external, but could not be found. Please create the network manually using `docker network create queue_net` and try again.```
+>
+> É Necessário criar a rede da fila antes de rodar os comandos. Apesar dela estar declarada no docker-compose do Rabbitmq isso dispara um erro pois a configuração external=true espera que a rede esteja criada no momento em que o arquivo é lido.
+
 1. Na raiz do projeto, execute para rodar os dois micro serviços ao mesmo tempo:
 
     ```bash
-    docker compose -f notification-service/docker-compose.yaml -f payment-service/docker-compose.yaml up --build -d
+    docker compose \
+    -f docker-compose.yaml \
+    -f notification-service/docker-compose.yaml \
+    -f payment-service/docker-compose.yaml \
+    up -d
     ```
 
 2. Para parar um ou mais serviços referencie com o -f qual o docker-compose que está interagindo:
 
     ```bash
-    docker compose -f notification-service/docker-compose.yaml -f payment-service/docker-compose.yaml down
+    docker-compose \
+    -f docker-compose.yaml \
+    -f notification-service/docker-compose.yaml \
+    -f payment-service/docker-compose.yaml \
+    down
 
     ```
 
@@ -56,5 +70,6 @@ O sistema utiliza uma arquitetura de microserviços com as seguintes caracterís
 Para verificar o status dos containers:
 
 ```bash
-docker-compose ps
+docker ps
 ```
+
