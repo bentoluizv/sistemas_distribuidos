@@ -10,6 +10,8 @@ services:
       POSTGRES_DB: payment_db
     volumes:
       - payment_postgres_data:/var/lib/postgresql/data
+    ports:
+      - ":5432"
     networks:
       - payment_net
 
@@ -19,25 +21,15 @@ services:
     restart: unless-stopped
     volumes:
       - payment_redis_data:/data
-    networks:
-      - payment_net
-
-  payment-rabbitmq:
-    image: rabbitmq:4.1
-    container_name: payment-rabbitmq
-    restart: unless-stopped
-    environment:
-      RABBITMQ_DEFAULT_USER: payment_user
-      RABBITMQ_DEFAULT_PASS: payment_pass
     ports:
-      - "15673:15672"
-    volumes:
-      - payment_rabbitmq_data:/var/lib/rabbitmq
+      - ":6379"
     networks:
       - payment_net
 
   payment-service:
-    build: .
+    build:
+      context: payment-service
+      dockerfile: Dockerfile
     container_name: payment-service
     restart: unless-stopped
     environment:
@@ -47,20 +39,20 @@ services:
     depends_on:
       - payment-database
       - payment-redis
-      - payment-rabbitmq
     networks:
       - payment_net
-    volumes:
-      - ./payment-service:/app
-    working_dir: /app
-    command: npm run dev
+      - queue_net
+    ports:
+      - "3000:3000"
 
 networks:
   payment_net:
     name: payment_net
     driver: bridge
 
+  queue_net:
+    external: true
+
 volumes:
   payment_postgres_data:
   payment_redis_data:
-  payment_rabbitmq_data:
