@@ -5,11 +5,13 @@ services:
     container_name: notification-database
     restart: unless-stopped
     environment:
-      POSTGRES_USER: notification_user
-      POSTGRES_PASSWORD: notification_pass
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass1234
       POSTGRES_DB: notification_db
     volumes:
       - notification_postgres_data:/var/lib/postgresql/data
+    ports:
+      - ":5432"
     networks:
       - notification_net
 
@@ -19,47 +21,38 @@ services:
     restart: unless-stopped
     volumes:
       - notification_redis_data:/data
-    networks:
-      - notification_net
-
-  notification-rabbitmq:
-    image: rabbitmq:4.1
-    container_name: notification-rabbitmq
-    restart: unless-stopped
-    environment:
-      RABBITMQ_DEFAULT_USER: notification_user
-      RABBITMQ_DEFAULT_PASS: notification_pass
     ports:
-      - "15672:15672"
-    volumes:
-      - notification_rabbitmq_data:/var/lib/rabbitmq
+      - ":6379"
     networks:
       - notification_net
 
   notification-service:
-    build: .
+    build:
+      context: notification-service
+      dockerfile: Dockerfile
     container_name: notification-service
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://notification_user:notification_pass@notification-database:5432/notification_db
+      DATABASE_URL: postgres://user:pass1234@notification-database:5432/notification_db
       REDIS_URL: redis://notification-redis:6379
-      RABBITMQ_URL: amqp://notification_user:notification_pass@notification-rabbitmq:5672
+      RABBITMQ_URL: amqp://user:pass1234@rabbitmq:5672
     depends_on:
       - notification-database
       - notification-redis
-      - notification-rabbitmq
     networks:
       - notification_net
-    volumes:
-      - ./notification-service:/app
-    working_dir: /app
-    command: npm run dev
+      - queue_net
+    ports:
+      - "3001:3000"
 
 
 networks:
   notification_net:
     name: notification_net
     driver: bridge
+
+  queue_net:
+    external: true
 
 volumes:
   notification_postgres_data:
