@@ -15,30 +15,14 @@ services:
     networks:
       - notification_net
 
-  notification-redis:
-    image: redis:8.0
-    container_name: notification-redis
-    restart: unless-stopped
-    volumes:
-      - notification_redis_data:/data
-    ports:
-      - ":6379"
-    networks:
-      - notification_net
-
   notification-service:
     build:
       context: notification-service
       dockerfile: Dockerfile
     container_name: notification-service
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: postgres://user:pass1234@notification-database:5432/notification_db
-      REDIS_URL: redis://notification-redis:6379
-      RABBITMQ_URL: amqp://user:pass1234@rabbitmq:5672
+    restart: unless-stopped      
     depends_on:
       - notification-database
-      - notification-redis
     networks:
       - notification_net
       - queue_net
@@ -56,6 +40,5 @@ networks:
 
 volumes:
   notification_postgres_data:
-  notification_redis_data:
   notification_rabbitmq_data:
 

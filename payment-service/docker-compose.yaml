@@ -15,30 +15,14 @@ services:
     networks:
       - payment_net
 
-  payment-redis:
-    image: redis:8.0
-    container_name: payment-redis
-    restart: unless-stopped
-    volumes:
-      - payment_redis_data:/data
-    ports:
-      - ":6379"
-    networks:
-      - payment_net
-
   payment-service:
     build:
       context: payment-service
       dockerfile: Dockerfile
     container_name: payment-service
     restart: unless-stopped
-    environment:
-      DATABASE_URL: postgres://payment_user:payment_pass@payment-database:5432/payment_db
-      REDIS_URL: redis://payment-redis:6379
-      RABBITMQ_URL: amqp://payment_user:payment_pass@payment-rabbitmq:5672
     depends_on:
       - payment-database
-      - payment-redis
     networks:
       - payment_net
       - queue_net
@@ -55,4 +39,3 @@ networks:
 
 volumes:
   payment_postgres_data:
-  payment_redis_data:
