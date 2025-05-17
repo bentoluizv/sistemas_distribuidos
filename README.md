@@ -1,75 +1,128 @@
-# Sistema de Microserviços
+# Sistema de Pagamento e Notificação
 
-## Descrição
+Este é um sistema distribuído que implementa um serviço de pagamento com cartão de crédito e um serviço de notificação por e-mail. O sistema utiliza NestJS para os microserviços e RabbitMQ para comunicação entre eles.
 
-Este é um sistema distribuído composto por dois microserviços:
+## Arquitetura
 
-1. **Serviço de Notificações**
-   - Responsável pelo gerenciamento e envio de notificações
-   - Implementado em NestJS
+O sistema é composto por dois microserviços:
+
+1. **Serviço de Pagamento (ms-payment-service)**
+   - Gerencia pagamentos com cartão de crédito
    - Porta: 3000
 
-2. **Serviço de Pagamentos**
-   - Gerencia o processamento de pagamentos
-   - Implementado em NestJS
+2. **Serviço de Notificação (ms-notification-service)**
+   - Recebe e processa notificações
    - Porta: 3001
 
-## Infraestrutura
-
-O sistema utiliza uma arquitetura de microserviços com as seguintes características:
-
-- **Comunicação**: Comunicação assíncrona entre serviços
-- **Containerização**: Cada serviço é containerizado usando Docker
-- **Orquestração**: Docker Compose para gerenciamento dos containers
-- **Escalabilidade**: Serviços independentes permitem escalar individualmente
-- **Resiliência**: Falhas em um serviço não afetam o outro
-
-## Executando o Projeto
-
-### Pré-requisitos
+## Pré-requisitos
 
 - Docker
 - Docker Compose
 
-### Iniciando os Serviços
+## Executando o Projeto
 
-#### ***TL:DR***
-
-> ```ERROR: Network queue_net declared as external, but could not be found. Please create the network manually using `docker network create queue_net` and try again.```
->
-> É Necessário criar a rede da fila antes de rodar os comandos. Apesar dela estar declarada no docker-compose do Rabbitmq isso dispara um erro pois a configuração external=true espera que a rede esteja criada no momento em que o arquivo é lido.
-
-1. Na raiz do projeto, execute para rodar os dois micro serviços ao mesmo tempo:
+1. Clone o repositório:
 
     ```bash
-    docker compose \
-    -f docker-compose.yaml \
-    -f notification-service/docker-compose.yaml \
-    -f payment-service/docker-compose.yaml \
-    up -d
+    git clone <url-do-repositorio>
+    cd sistemas_distribuidos
     ```
 
-2. Para parar um ou mais serviços referencie com o -f qual o docker-compose que está interagindo:
+2. Inicie todos os serviços com Docker Compose:
 
     ```bash
-    docker-compose \
-    -f docker-compose.yaml \
-    -f notification-service/docker-compose.yaml \
-    -f payment-service/docker-compose.yaml \
-    down
-
+    docker compose up -d
     ```
 
-### Acessando os Serviços
+Este comando irá:
 
-- Serviço de Notificações: <http://localhost:3000>
-- Serviço de Pagamentos: <http://localhost:3001>
+- Criar e iniciar os containers
+- Configurar as redes
+- Configurar os volumes
+- Executar as migrações do banco de dados
+- Iniciar os serviços
 
-### Monitoramento
+## Acessando a API
 
-Para verificar o status dos containers:
+### Serviço de Pagamento
 
-```bash
-docker ps
-```
+- Swagger UI: <http://localhost:3000/api>
+- Endpoints:
+  - POST /credit-card: Criar um novo pagamento
+
+### Serviço de Notificação
+
+- Endpoints:
+  - GET /mail/get: Consultar notificações por usuário
+
+## Comandos Úteis do Docker Compose
+
+1. Verificar status dos serviços:
+
+    ```bash
+    docker compose ps
+    ```
+
+2. Visualizar logs dos serviços:
+
+    ```bash
+    docker compose logs -f
+    ```
+
+3. Parar todos os serviços:
+
+    ```bash
+    docker compose down
+    ```
+
+4. Reconstruir e reiniciar os serviços:
+
+    ```bash
+    docker compose up -d --build
+    ```
+
+5. Visualizar logs de um serviço específico:
+
+    ```bash
+    docker compose logs -f ms-payment-service
+    docker compose logs -f ms-notification-service
+    ```
+
+## Fluxo de Funcionamento
+
+1. O cliente faz uma requisição para criar um pagamento
+2. O serviço de pagamento processa a transação
+3. Uma notificação é enviada para o serviço de notificação via RabbitMQ
+4. O serviço de notificação envia um e-mail de confirmação
+5. Após 10 segundos, uma confirmação de pagamento é enviada
+6. O serviço de notificação envia um e-mail de confirmação do pagamento
+
+## Solução de Problemas
+
+Se encontrar algum problema:
+
+1. Verifique se todos os containers estão rodando:
+
+    ```bash
+    docker compose ps
+    ```
+
+2. Verifique os logs em busca de erros:
+
+    ```bash
+    docker compose logs -f
+    ```
+
+3. Se necessário, reinicie os serviços:
+
+    ```bash
+    docker compose restart
+    ```
+
+4. Para uma reinicialização completa:
+
+    ```bash
+    docker compose down
+    docker compose up -d
+    ```
 
