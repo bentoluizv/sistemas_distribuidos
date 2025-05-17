@@ -4,8 +4,8 @@ services:
     container_name: rabbitmq
     restart: unless-stopped
     environment:
-      RABBITMQ_DEFAULT_USER: user
-      RABBITMQ_DEFAULT_PASS: pass1234
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: 123456
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -13,10 +13,105 @@ services:
       - queue_data:/var/lib/rabbitmq
     networks:
       - queue_net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  db_notification:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: notification
+    ports:
+      - :5432
+    volumes:
+      - db_notification_data:/var/lib/postgresql/data
+    networks:
+      - notification_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  ms_notification:
+    build:
+      context: ms-notification-service
+      dockerfile: Dockerfile
+    ports:
+      - 3001:3000
+    networks:
+      - notification_net
+      - queue_net
+    depends_on:
+      db_notification:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  db_payment:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: payment
+    ports:
+      - :5432
+    volumes:
+      - db_payment_data:/var/lib/postgresql/data
+    networks:
+      - payment_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  ms_payment:
+    build:
+      context: ms-payment-service
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    networks:
+      - payment_net
+      - queue_net
+    depends_on:
+      db_payment:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
 volumes:
+  db_notification_data:
+  db_payment_data:
   queue_data:
+  rabbitmq_data:
 
 networks:
+  notification_net:
+    driver: bridge
+
   queue_net:
-    external: true
+    driver: bridge
+
+  payment_net:
+    driver: bridge
