@@ -94,32 +94,3 @@ Este comando irá:
 2. O serviço de pagamento processa a transação
 3. Uma notificação é enviada para o serviço de notificação via RabbitMQ
 4. O serviço de notificação faz um log da notificação recebita na fila.
-
-## Solução de Problemas
-
-Se encontrar algum problema:
-
-1. Verifique se todos os containers estão rodando:
-
-    ```bash
-    docker compose ps
-    ```
-
-2. Verifique os logs em busca de erros:
-
-    ```bash
-    docker compose logs -f
-    ```
-
-3. Se necessário, reinicie os serviços:
-
-    ```bash
-    docker compose restart
-    ```
-
-4. Para uma reinicialização completa:
-
-    ```bash
-    docker compose down
-    docker compose up -d
-    ```
