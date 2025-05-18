@@ -24,14 +24,14 @@ O sistema é composto por dois microserviços:
 1. Clone o repositório:
 
     ```bash
-    git clone <url-do-repositorio>
+    git clone git@github.com:bentoluizv/sistemas_distribuidos.git
     cd sistemas_distribuidos
     ```
 
 2. Inicie todos os serviços com Docker Compose:
 
     ```bash
-    docker compose up -d
+    docker compose up -d --build
     ```
 
 Este comando irá:
@@ -93,9 +93,7 @@ Este comando irá:
 1. O cliente faz uma requisição para criar um pagamento
 2. O serviço de pagamento processa a transação
 3. Uma notificação é enviada para o serviço de notificação via RabbitMQ
-4. O serviço de notificação envia um e-mail de confirmação
-5. Após 10 segundos, uma confirmação de pagamento é enviada
-6. O serviço de notificação envia um e-mail de confirmação do pagamento
+4. O serviço de notificação faz um log da notificação recebita na fila.
 
 ## Solução de Problemas
 
@@ -125,4 +123,3 @@ Se encontrar algum problema:
     docker compose down
     docker compose up -d
     ```
-
